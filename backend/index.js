@@ -1,18 +1,15 @@
-// Basic Express server entrypoint
+// index.js simply bootstraps the main server module
 require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
+const { app, server } = require('./server');
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+// additional startup logic could go here
+// the server is already listening via server.js
 
-const port = process.env.PORT || 5000;
+// gracefully handle termination signals
+const shutdown = () => {
+  console.log('Stopping server');
+  server.close(() => process.exit(0));
+};
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
 
-app.get('/', (req, res) => {
-  res.send('Hello from FreeLancePay backend!');
-});
-
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});

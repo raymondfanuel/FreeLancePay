@@ -2,11 +2,15 @@ const StellarSdk = require('stellar-sdk');
 const axios = require('axios');
 require('dotenv').config();
 
-const horizonUrl = process.env.HORIZON_URL || 'https://horizon-testnet.stellar.org';
-const server = new StellarSdk.Server(horizonUrl);
-StellarSdk.Networks.useTestNetwork();
+const config = require('./config');
+const logger = require('./utils/logger');
 
-const USDC_ISSUER = process.env.USDC_ISSUER;
+const horizonUrl = config.horizonUrl;
+// Server class moved under Horizon namespace in newer versions
+const server = new StellarSdk.Horizon.Server(horizonUrl);
+// network passphrase will be provided per-transaction below
+
+const USDC_ISSUER = config.usdcIssuer;
 const USDC = new StellarSdk.Asset('USDC', USDC_ISSUER);
 const FRIEND_BOT_URL = 'https://friendbot.stellar.org';
 
@@ -36,7 +40,7 @@ async function addUSDCTrustline(secretKey) {
 
     const transaction = new StellarSdk.TransactionBuilder(account, {
       fee,
-      networkPassphrase: StellarSdk.Networks.TESTNET,
+      networkPassphrase: config.network === 'TESTNET' ? StellarSdk.Networks.TESTNET : StellarSdk.Networks.PUBLIC,
     })
       .addOperation(
         StellarSdk.Operation.changeTrust({
@@ -48,8 +52,10 @@ async function addUSDCTrustline(secretKey) {
 
     transaction.sign(pair);
     const result = await server.submitTransaction(transaction);
+    logger.info('trustline added', { publicKey: pair.publicKey() });
     return result;
   } catch (err) {
+    logger.error('addUSDCTrustline failure', { error: err.message });
     throw new Error(err.response?.data?.extras?.result_codes || err.message);
   }
 }
@@ -62,7 +68,7 @@ async function sendUSDCPayment({ senderSecret, receiverPublic, amount, memoText 
 
     const transactionBuilder = new StellarSdk.TransactionBuilder(account, {
       fee,
-      networkPassphrase: StellarSdk.Networks.TESTNET,
+      networkPassphrase: config.network === 'TESTNET' ? StellarSdk.Networks.TESTNET : StellarSdk.Networks.PUBLIC,
     })
       .addOperation(
         StellarSdk.Operation.payment({
@@ -80,12 +86,14 @@ async function sendUSDCPayment({ senderSecret, receiverPublic, amount, memoText 
     const transaction = transactionBuilder.build();
     transaction.sign(senderKeypair);
     const result = await server.submitTransaction(transaction);
+    logger.info('sent payment', { from: senderKeypair.publicKey(), to: receiverPublic, amount });
     return {
       hash: result.hash,
       fee_charged: result.fee_charged,
       ledger: result.ledger,
     };
   } catch (err) {
+    logger.error('sendUSDCPayment failure', { error: err.message });
     throw new Error(err.response?.data?.extras?.result_codes || err.message);
   }
 }
@@ -101,6 +109,7 @@ async function getBalances(publicKey) {
     });
     return balances;
   } catch (err) {
+    logger.error('getBalances failure', { publicKey, error: err.message });
     throw new Error(err.response?.data?.extras?.result_codes || err.message);
   }
 }
