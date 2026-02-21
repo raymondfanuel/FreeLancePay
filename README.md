@@ -1,2 +1,2 @@
 --today
-one and only 
+one and only
