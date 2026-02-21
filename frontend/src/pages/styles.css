@@ -1,0 +1,30 @@
+/* Global styles for pages */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Syne', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Utility classes */
+.hidden {
+  display: none !important;
+}
+
+/* Color variables - make sure these match App.css */
+:root {
+  --primary: #667eea;
+  --accent: #06d6d0;
+  --accent2: #00bcd4;
+  --background: #0a0e27;
+  --surface: #1a1f3a;
+  --success: #4caf50;
+  --error: #f44336;
+  --warning: #ff9800;
+  --text-primary: #ffffff;
+  --text-secondary: #e0e0e0;
+  --text-muted: #9e9e9e;
+}

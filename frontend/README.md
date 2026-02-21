@@ -1,70 +1,48 @@
-# Getting Started with Create React App
+# FreeLancePay Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This React application provides a minimal UI for interacting with the FreeLancePay backend. It requires the backend server to be running (default `http://localhost:5000`).
 
-## Available Scripts
+## Quick start
 
-In the project directory, you can run:
+```bash
+cd frontend
+npm install
+# start backend in a separate terminal (see backend/README.md)
+npm start
+```
 
-### `npm start`
+The app will open at [http://localhost:3000](http://localhost:3000).
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Environment
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+You can override the backend URL by setting:
 
-### `npm test`
+```bash
+REACT_APP_BACKEND_URL=http://your-host:5000 npm start
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Workflow
 
-### `npm run build`
+1. Launch backend server (`npm run dev` under `backend/`).
+2. In frontend, click **Create Employer** and **Create Freelancer** – these use the API to create two testnet accounts and automatically add USDC trustlines.
+3. After accounts are created, the balance cards display each account's balances.
+4. Use the payment form to transfer USDC from the employer to the freelancer; balances refresh automatically.
+5. Raw keys are shown at the bottom for debugging (never use real secrets in production!).
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## API Endpoints Used
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+* `POST /api/v1/create-account/employer`
+* `POST /api/v1/create-account/freelancer`
+* `POST /api/v1/add-trustline`
+* `GET /api/v1/balance/:publicKey`
+* `POST /api/v1/send-payment`
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+CORS is enabled on the backend so cross-origin requests should work out of the box.
 
-### `npm run eject`
+## Scripts
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Standard CRA commands are available (`npm start`, `npm test`, `npm run build`).
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+The rest of this file has been replaced with custom project instructions. Remove the boilerplate if you ejected or feel comfortable managing your own configuration.

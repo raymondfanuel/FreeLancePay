@@ -19,7 +19,8 @@ async function fundAccount(publicKey) {
     const response = await axios.get(`${FRIEND_BOT_URL}?addr=${publicKey}`);
     return response.data;
   } catch (err) {
-    throw new Error(`friendbot failed: ${err.response?.data || err.message}`);
+    const detail = err.response?.data ? (typeof err.response.data === 'string' ? err.response.data : JSON.stringify(err.response.data)) : err.message;
+    throw new Error(`friendbot failed: ${detail}`);
   }
 }
 
@@ -56,7 +57,9 @@ async function addUSDCTrustline(secretKey) {
     return result;
   } catch (err) {
     logger.error('addUSDCTrustline failure', { error: err.message });
-    throw new Error(err.response?.data?.extras?.result_codes || err.message);
+    const rc = err.response?.data?.extras?.result_codes;
+    const detail = rc ? (typeof rc === 'string' ? rc : JSON.stringify(rc)) : err.message;
+    throw new Error(detail);
   }
 }
 
@@ -65,6 +68,18 @@ async function sendUSDCPayment({ senderSecret, receiverPublic, amount, memoText 
     const senderKeypair = StellarSdk.Keypair.fromSecret(senderSecret);
     const account = await server.loadAccount(senderKeypair.publicKey());
     const fee = await server.fetchBaseFee();
+
+    // Preflight: ensure sender has enough USDC balance to cover the payment
+    try {
+      const usdcBal = account.balances.find((b) => b.asset_code === 'USDC' && b.asset_issuer === USDC_ISSUER);
+      const numericBal = usdcBal ? parseFloat(usdcBal.balance) : 0;
+      if (numericBal < Number(amount)) {
+        throw new Error(`insufficient_balance: sender has ${numericBal} USDC, needs ${amount}`);
+      }
+    } catch (preflightErr) {
+      // throw a clear error that callers can map
+      throw new Error(preflightErr.message || 'insufficient balance for USDC payment');
+    }
 
     const transactionBuilder = new StellarSdk.TransactionBuilder(account, {
       fee,
@@ -93,8 +108,22 @@ async function sendUSDCPayment({ senderSecret, receiverPublic, amount, memoText 
       ledger: result.ledger,
     };
   } catch (err) {
-    logger.error('sendUSDCPayment failure', { error: err.message });
-    throw new Error(err.response?.data?.extras?.result_codes || err.message);
+    logger.error('sendUSDCPayment failure', { error: err.message, raw: err });
+    // If Horizon returned structured extras, extract codes
+    const rc = err.response?.data?.extras?.result_codes || err.response?.data?.extras || null;
+    // Map common Horizon operation errors to friendly messages
+    if (rc && rc.operations && Array.isArray(rc.operations)) {
+      if (rc.operations.includes('op_no_trust')) {
+        throw new Error('op_no_trust: recipient does not trust USDC');
+      }
+      if (rc.operations.includes('op_underfunded')) {
+        throw new Error('op_underfunded: insufficient balance to perform the operation');
+      }
+    }
+
+    // Fallback: preserve original message
+    const detail = rc ? (typeof rc === 'string' ? rc : JSON.stringify(rc)) : err.message || String(err);
+    throw new Error(detail);
   }
 }
 
@@ -110,7 +139,9 @@ async function getBalances(publicKey) {
     return balances;
   } catch (err) {
     logger.error('getBalances failure', { publicKey, error: err.message });
-    throw new Error(err.response?.data?.extras?.result_codes || err.message);
+    const rc = err.response?.data?.extras?.result_codes;
+    const detail = rc ? (typeof rc === 'string' ? rc : JSON.stringify(rc)) : err.message;
+    throw new Error(detail);
   }
 }
 
